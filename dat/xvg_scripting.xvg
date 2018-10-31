@@ -1,0 +1,19 @@
+# some sample xvg scripting entries
+#
+# an example from http://plasma-gate.weizmann.ac.il/Grace/doc/Tutorial.html
+#
+#Obligatory descriptive comment
+s0.y = s0.y * 1000
+s0 line color 3
+s1 line color 4
+title "A Gnasty Graph"
+xaxis label "Time ( s )"
+yaxis label "Gnats ( 1000's  )"
+autoscale
+
+# calling to print:
+xmgrace file, etc.. -hdevice PNG -hardcopy -printfile output.png
+
+# autoarranging
+
+gracebat -pexec "arrange (2,1,.1,.1,.1)" -graph 0 -nxy pr_bh4-all-by_str-b1.xvg -graph 1 -nxy pr_bh4-all-by_str-b2.xvg -world 0 0 100 0.9 -hdevice PNG -hardcopy -printfile output.png

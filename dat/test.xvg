@@ -1,0 +1,44 @@
+# This file was created Fri Apr  6 10:39:46 2018
+# Created by:
+#                        :-) GROMACS - gmx rms, 2018 (-:
+#
+# Executable:   /usr/bin/gmx
+# Data prefix:  /usr
+# Working dir:  /home/gerr/hdd/sci/dat/comp/mdsim/runs_hpc/cmp_rmsd
+# Command line:
+#   gmx rms -s str_b1.gro -f ../b1/md01_ctr.xtc -o pr_bh4-b1_b1.xvg -tu ns -n ../b1/idx_bh4.ndx
+# gmx rms is part of G R O M A C S:
+#
+# Gyas ROwers Mature At Cryogenic Speed
+#
+@    title "RMSD"
+@    xaxis  label "Time (ns)"
+@    yaxis  label "RMSD (nm)"
+@TYPE xy
+@ subtitle "bh4 after lsq fit to bh4"
+   0.0000000    0.4102183
+   0.0200000    0.4252207
+   0.0400000    0.4414305
+   0.0600000    0.4495977
+   0.0800000    0.4438132
+   0.1000000    0.4490525
+   0.1200000    0.4758482
+   0.1400000    0.4901557
+   0.1600000    0.4921894
+   0.1800000    0.5088672
+   0.2000000    0.5225604
+   0.2200000    0.4858136
+   0.2400000    0.4694408
+   0.2600000    0.4950289
+   0.2800000    0.4862655
+   0.3000000    0.4689753
+   0.3200000    0.4941203
+   0.3400000    0.5150591
+   0.3600000    0.4923739
+   0.3800000    0.5081719
+   0.4000000    0.5036815
+   0.4200000    0.5062032
+   0.4400000    0.5036036
+   0.4600000    0.5108582
+   0.4800000    0.5179925
+   0.5000000    0.5035698
