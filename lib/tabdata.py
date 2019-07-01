@@ -9,6 +9,8 @@
 # we use dymamic method assignment to attach methods defined in other files
 # (instead of mix-in, which could be a better choice if this code grows too much)
 #
+#  NOTE: This should really be redoe using numpy
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -23,7 +25,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import sys,csv
+import sys, csv, copy
 
 from .tabdata_common import *
 
@@ -111,7 +113,7 @@ class TabData:
         if clear:
             self.headers = []
         self.headers.extend(headers)
-        
+
     def regenerate_time_uniform(self, N=0, t0=0, dt=0):
         """Regenerate the time column.
         Obviously this should only be called when no_time == False.
@@ -217,21 +219,22 @@ class TabData:
                 self.data.append(passed.data[i][:Npts])
 
 
-    def extend_columns(self, passed, at = 0, nfirst = 0, ncols = 0):
-        '''extend self.data columns by appending passed per-column after the end.
-        NOTE: 
+    def append_rows(self, passed, at = 0, nfirst = 0, ncols = 0):
+        '''extend self.data by appending data in 'passed' per-column after the end.
+        NOTE:
             1. If strict_rect is set then time (if exists) is auto-regenerated, to keep data consistent.
                If not set, then it is responsibility of a caller to handle time separately.
             2. If self.strict_rect then some consistency checks are performed,
                so you can stack only proper complete blocks..
             3. ColIDs are discarded, comments and headers are appended.
+        NOTE: time is not copied in this code!! (but then it should be refactored anyway..)
         params:
             at: add at this column in self.data
             nfirst, ncol: refer to passed
             nfirst counts from the start of data block (so 0 means the 1st data column)
             ncols==0 means use all;
         '''
-        print("extending data of {}x{} by new block of {}x{} rows".format(self.Nvars,self.Npts, passed.Nvars, passed.Npts))
+        #print("extending data of {}x{} by new block of {}x{} rows".format(self.Nvars,self.Npts, passed.Nvars, passed.Npts))
         if ncols == 0:
             nlast = len(passed.data)
         else:
@@ -257,6 +260,24 @@ class TabData:
         # if strict_rect then we need to regenerate time, to keep data always consistent
         if self.strict_rect and hasattr(self, "time"):
             self.regenerate_time_uniform()
+
+
+    def extract_rows(self, Nfrom, Nto = 0):
+        "create a new table with same heders but containing only rows from..to"
+        newdat = TabData(self.no_time, self.strict_rect)
+        newdat.comments = copy.deepcopy(self.comments)
+        newdat.headers  = copy.deepcopy(self.headers)
+        newdat.colID    = copy.deepcopy(self.colID)
+        # now extract and carry over proper data..
+        if Nto == 0:
+            Nto = self.Npts
+        for i in range(Nfrom, Nto):
+            for j in range(len(self.data)):
+                newdat.data[j].append(self.data[j][i])
+            if not no_time:
+                newdat.time.append(self.time[i])
+        # all done, return constructed object
+        return newdat
 
 
 #######################################################

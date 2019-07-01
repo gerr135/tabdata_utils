@@ -1,3 +1,4 @@
 [Project]
-Manager=KDevGenericManager
+CreatedFrom=tabdata_utils.kdev4
+Manager=KDevCustomMakeManager
 Name=tabdata_utils

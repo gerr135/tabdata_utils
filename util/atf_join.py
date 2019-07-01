@@ -58,7 +58,7 @@ for fn in args.fn[1:]:
             print("file ", fn, " has mismatching number of columns!")
             sys.exit()
         # now append column
-        data.extend_columns(newdat)
+        data.append_rows(newdat)
 
 # regenerate time column with given params
 data.regenerate_time_uniform(t0=t0,dt=dt)
