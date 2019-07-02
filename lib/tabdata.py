@@ -262,19 +262,27 @@ class TabData:
             self.regenerate_time_uniform()
 
 
-    def extract_rows(self, Nfrom, Nto = 0):
+    def extract_rows(self, Nfrom, Nto = 0, do_headers = True):
         "create a new table with same heders but containing only rows from..to"
-        newdat = TabData(self.no_time, self.strict_rect)
-        newdat.comments = copy.deepcopy(self.comments)
-        newdat.headers  = copy.deepcopy(self.headers)
+        newdat = TabData(not hasattr(self, "time"), self.strict_rect)
         newdat.colID    = copy.deepcopy(self.colID)
+        if do_headers:
+            newdat.comments = copy.deepcopy(self.comments)
+            newdat.headers  = copy.deepcopy(self.headers)
+        else:
+            newdat.comments = []
+            newdat.headers  = []
+        # make empty data columns
+        for i in range(self.Nvars):
+            newdat.data.append([])
         # now extract and carry over proper data..
         if Nto == 0:
             Nto = self.Npts
         for i in range(Nfrom, Nto):
             for j in range(len(self.data)):
+                #print("i={}, j={}".format(i,j))
                 newdat.data[j].append(self.data[j][i])
-            if not no_time:
+            if hasattr(self, "time"):
                 newdat.time.append(self.time[i])
         # all done, return constructed object
         return newdat

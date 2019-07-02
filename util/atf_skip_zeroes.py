@@ -33,6 +33,7 @@ in the selecetd column. The time column can be recalculated to be continous or l
 ''')
     parser.add_argument('fn',  help="input file name")
     parser.add_argument('-n',  type=int,   help="column number to use for 0-skipping (1 if omitted)")
+    parser.add_argument('-s0', type=int,   help="number of consequtive 0's to count as beginning of 0-block (default: 3)")
     parser.add_argument('-t0', type=float, help="initial time (if omitted, start at initial time)")
     parser.add_argument('-dt', type=float, help="time step (if omitted, autocalc based on first 2 entries)")
     parser.add_argument('-o',  help="name of output file. If omitted, use fn1[:-3]_cut.atf")
@@ -45,27 +46,59 @@ in the selecetd column. The time column can be recalculated to be continous or l
 #main block
 args = ProcessCommandLine()
 
-Ncol = args.n if args.n else 1
+Ncol = args.n if args.n else 0  # index inside data table, 0-based
 Nbeg, Nend = 0, 0 # tracking scan progress
+N0 = args.s0 if args.s0 else 3
 
 # read the 1st file and init the time column params
 with open(args.fn) as F:
     data = tabdata.from_atf(F, strict_rect = True)
+    print("read data from ", args.fn)
 
-for i in range(data.Npts-3):
-    if (data.data[Ncol][i] == 0) and (data.data[Ncol][i+1] == 0) and (data.data[Ncol][i+2] == 0):
-        Nend = i
-        break
+LastIdx = data.Npts - N0 # last index to check..
 
-if Nend == data.Npts-3:
+
+def find_zero_block(data, start):
+    "scan through data from start position t fin N0 consequtive 0's"
+    curpos = start
+    while curpos < LastIdx:
+        incomplete = False
+        for i in range(curpos, LastIdx):
+            if data.data[Ncol][i] == 0:
+                # found 1st zero, scan to check if its a block or an occasional 0..
+                #print("found 0 at ", i)
+                for j in range(i+1, i+N0):
+                    if data.data[Ncol][j] != 0:
+                        curpos = j
+                        incomplete = True
+                        break
+                if incomplete:
+                    # restart the i-loop from new curpos (already set)
+                    #print("incomplete block, curpos = ", curpos)
+                    break
+                else:
+                    # found block of N0 consequtive zeros..
+                    #print("complete block, returning ", i)
+                    return i # index of 1st zero
+        # end of "for i" loop,
+        if not incomplete:
+            # either no zeros were found, or last 0-block was too short..
+            #print("no zero-blocks found")
+            return LastIdx
+
+
+Nend = find_zero_block(data, 0)
+
+if Nend == LastIdx:
     print('no zero fragments found in requested column. Aborting..')
     sys.exit(0)
 else:
-    newdat = data.extract_rows(0, Nend)
+    print("1st zero block found with Nend=", Nend)
+    newdat = data.extract_rows(0, Nend, do_headers=True)
 
 while Nend < data.Npts:
     # first find the beginning of the next non-zero block..
-    for i in range(Nend+2, data.Npts):
+    for i in range(Nend+N0, data.Npts):
         if data.data[Ncol][i] != 0:
             Nbeg = i
             break
@@ -75,15 +108,15 @@ while Nend < data.Npts:
         break
     #
     # now scan again until we encoutner zeros..
-    for i in range(Nbeg+1, data.Npts-3):
-        if (data.data[Ncol][i] == 0) and (data.data[Ncol][i+1] == 0) and (data.data[Ncol][i+2] == 0):
-            Nend = i
-            break
-    if Nend < Nbeg:
+    #print("scanning for new zero-block starting at ", Nbeg)
+    Nend = find_zero_block(data, Nbeg+1)
+    if Nend == LastIdx:
         # no zeros found above, so we are at the end. Set Nbeg appropriately.
         Nend = data.Npts
     # block found, copy data over
-    newdat.append_rows(data.extract_rows(Nbeg, Nend))
+    print("non-zero block at:", Nbeg, Nend, ";  newdat.Npts=", newdat.Npts)
+    blk = data.extract_rows(Nbeg, Nend, do_headers=False)
+    newdat.append_rows(blk)
 
 
 if args.ts:
@@ -96,8 +129,8 @@ else:
     # regenerate time column with given or derived params
     t0 = args.t0 if args.t0 else data.time[0]
     dt = args.dt if args.dt else data.time[1] - data.time[0]
-    data.regenerate_time_uniform(t0=t0,dt=dt)
+    newdat.regenerate_time_uniform(t0=t0,dt=dt)
 
-fn = args.o if args.o else args.fn[0][:-4]+"_cut.atf"
+fn = args.o if args.o else args.fn[:-4]+"_cut.atf"
 with open(fn, mode='w') as F:
-    data.write_atf(F)
+    newdat.write_atf(F)
