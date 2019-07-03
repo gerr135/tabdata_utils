@@ -85,6 +85,9 @@ def find_zero_block(data, start):
             # either no zeros were found, or last 0-block was too short..
             #print("no zero-blocks found")
             return LastIdx
+    # occasionally we can get here, if last block ends on 0, or there is a 0 at
+    # the very specific (LastIdx) position
+    return LastIdx
 
 
 Nend = find_zero_block(data, 0)
