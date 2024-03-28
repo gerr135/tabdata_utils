@@ -4,7 +4,7 @@ This performs the "decimate" routine - trows away the amjority of data, retainin
 but it tries to do it in a smarter way - trying to retain as much of "activity" as possible.
 Often direct decimation routine (especially with high N) removes completely short openings,
 in the traces with low Po, where there are very short-lived states that may only take 1-2 datapoints.
-This procedure will try to keep the appearance of evenshort openings, by returning the max
+This procedure will try to keep the visual appearance by trying to retain peaks: returning the max
 point over certain threshold. This should reduce the size of strongly "oversampled" traces
 in a "safer" way..
 '''
@@ -26,14 +26,14 @@ in a "safer" way..
 #
 
 import sys,argparse
-from lib import tabdata, tabdata_io
+from lib import tabdata
 
 File_Formats = ['csv','atf']
 
 def ProcessCommandLine():
     parser = argparse.ArgumentParser(description='''"smart" decimate utility.
 
-This performs the "decimate" routine - trows away the amjority of data, retaining every Nth point,
+This performs the "decimate" routine - trows away the majority of data, retaining every Nth point,
 but it tries to do it in a smarter way - trying to retain as much of "activity" as possible.
 '''
 )
@@ -73,7 +73,7 @@ with open(args.fn) as F:
     data = tabdata.TabData()
     tabdata_io.read_xvg_byGmx(data, F)
 
-
+# incomplete?
 
 
 tabdata_io.write_xvg_byGmx(data, F)

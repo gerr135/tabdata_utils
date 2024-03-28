@@ -106,7 +106,12 @@ def read_atf(self, F):
         self.headers.append(F.readline().strip())
     # should be done with generic headers, now the column titles
     for col in F.readline().strip().split("\t"): # \t is used as the separator in ATF throughout
-        self.colID.append(col)
+        # ATF format uses quotes in title row for each entry, other formats don't, so strip them here
+        newCol = col
+        if col[0] == '"':
+            newCol = col[1:-1]
+            #print("removing quotes, newCol=" + newCol)
+        self.colID.append(newCol)
     if len(self.colID) != Ncol: raise ATF_Error
     # now just run until the end line by line..
     # prepare the empty data columns (only data, no time here)
@@ -127,8 +132,9 @@ def write_atf(self, F):
         F.write(hdr + "\n")
     # next form the column titles
     for col in self.colID[:-1]:
-        F.write(col + "\t")
-    F.write(self.colID[-1] + "\n")
+        # readd quotes in titles
+        F.write('"' + col + '"' + "\t")
+    F.write('"' + self.colID[-1] + '"' + "\n")
     #
     # now dump the data
     for i in range(len(self.time)):
