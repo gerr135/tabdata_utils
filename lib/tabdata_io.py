@@ -234,8 +234,8 @@ def read_HEKA_csv(self, F):
     line1 = next(reader)
     if len(line1) != 1 or line1[0][:6] != "Series":
         raise HEKA_CSV_Error
-    last_row_empty = True # to signal the start of new episode
     #
+    last_row_empty = True # to signal the start of new episode
     firstSweep = True
     #iSweep = -1 # N of the episode
     i, NSmpl  = 0, 0 # cycle index and total samples in single episode
@@ -257,15 +257,7 @@ def read_HEKA_csv(self, F):
                 #print(self.time)
                 #print(self.data)
                 raise HEKA_CSV_Error
-            #
-            continue # processing of the end of an episode finished
-        #
-        # all the other lines should have 3 elements
-        if len(row) != 3:
-            raise HEKA_CSV_Error
-        #
-        # check for possible start of new episode
-        if last_row_empty:
+        elif last_row_empty:  # start of new episode
             if row[0][:5] == "Sweep":
                 # beginning of a new episode/sweep, reset/increment indeces
                 self.data.append([])
@@ -276,17 +268,21 @@ def read_HEKA_csv(self, F):
                 # now, for quickness we just assume time (s) and current (A)
                 # add some checks/conversions to produce more generic code if/when needed!!
                 if next(reader)[0] != "Index": raise HEKA_CSV_Error
-                continue
             else:
                 # unexpected mismatch of format
                 raise HEKA_CSV_Error
-        #
-        # the regular iteration
-        if firstSweep:
-            # time in milliseconds by convention
-            self.time.append(float(row[1])*1000)
-        # current in pA by convention
-        self.data[-1].append(float(row[2])*1e12)
+        else:
+            # the regular iteration, bulk of data
+            if len(row) != 3:
+                # data lines should have 3 entries, otherwise its a multi-channel file
+                print("multiple channel file!")
+                raise HEKA_CSV_Error
+            #
+            if firstSweep:
+                # time is in milliseconds by convention
+                self.time.append(round(float(row[1])*1000,3)) # round to prevent representation error, mks resolution is realistically the smallest
+            # current is in pA by convention
+            self.data[-1].append(float(row[2])*1e12)
     #
     # done with data, need to recreate headers and column names
     # just use most common ATF values here for Episodic data..
