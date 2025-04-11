@@ -31,7 +31,7 @@ from .tabdata_common import *
 
 
 class TabData:
-    """Base data handling class. Keeps data i none place and provides basic access/features.
+    """Base data handling class. Keeps data in one place and provides basic access/features.
     Data layout:
     Data is organized in columns. There is an optional "special" time column.
     Data indexing convention (self.data and self.time fields):

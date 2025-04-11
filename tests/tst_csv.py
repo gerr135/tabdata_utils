@@ -25,6 +25,7 @@ from lib import tabdata
 Separator = ','
 fn  = "../dat/test.csv"
 fnt = "../dat/test_t.csv"
+fn3 = "../dat/c001.dat"
 
 print("testing read/write methods, no_time case")
 data = tabdata.TabData(no_time=True)
@@ -43,3 +44,9 @@ with open(fn) as F:
     data = tabdata.from_csv(F)
     data.write_csv(sys.stdout, Separator = ';')
 
+
+print("\ntesting TAb separated, with spaces and time column")
+data = tabdata.TabData(no_time=False)
+with open(fn3) as F:
+    data.read_csv(F, Separator='\t')
+    data.write_csv(sys.stdout)

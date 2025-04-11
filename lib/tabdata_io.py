@@ -37,7 +37,8 @@ from .tabdata_common import *
 
 def read_csv(self, F, Separator = ','):
     """read a basic csv file into self = Tabular_Data:
-        optional headers line, followed by 1 entry  per line.
+        Accepts and autoassigns optional headers line,
+        all the following lines are expected to have (float) values.
         All lines are supposed to have the same amount of entries (otherwise CSV_Error is raised).
         Signal "no time column" condition when calling constructor.
         sep  - separator to be used,
@@ -45,6 +46,7 @@ def read_csv(self, F, Separator = ','):
     reader = csv.reader(F, delimiter=Separator)
     line1 = next(reader)
     NCols = len(line1)
+    #print(line1, NCols)
     # initialize base structure
     if self.has_time():
         self.data = [[] for i in range(NCols - 1)]
@@ -56,6 +58,7 @@ def read_csv(self, F, Separator = ','):
         "distribute list of strings into time/data entries"
         if self.has_time():
             if len(items) != len(self.data)+1:
+                #print("mismatch of N entries:  N row =", len(self.data[0]), ", len=", len(items), ",  items = ", items)
                 raise FormatMismatch
             self.time.append(float(items[0]))
             for i in range(1,len(items)):
@@ -69,7 +72,7 @@ def read_csv(self, F, Separator = ','):
     # try to detect if 1st line contains a header or data
     try:
         ff = float(line1[0])
-        # still here? no header then, only data; pack the already read entries
+        # no error -> no header, only data; pack the already read entries
         line2data(line1)
     except ValueError:
         # we got a proper header, just use it directly
@@ -77,6 +80,9 @@ def read_csv(self, F, Separator = ','):
     #
     # we are all set now, just run to the end reading data line by line
     for line in reader:
+        if len(line) == 1 and line[0] == '\x00':
+            # ignore the null char at the end of the file, seemingly added by some Windows editors
+            break
         line2data(line)
 
 def write_csv(self, F, Separator = ','):
