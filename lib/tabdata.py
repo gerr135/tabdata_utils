@@ -63,7 +63,7 @@ class TabData:
         self.strict_rect = strict_rect
         self.comments = [] # some formats may allow a few lines of comments at the top
         self.headers  = [] # some descriptive info of consequence
-        self.colID = [] # list of strings representing column names, should match data[+time] in size
+        self.colID = [] # list of strings representing column names, should match data[+time] in size :- colID[0] == time header, if time is present
         self.data  = [] # list of columns, each holding a single "vector" - list of values
         if not no_time:
             self.time = [] # most files are gonna have special 1st column;
