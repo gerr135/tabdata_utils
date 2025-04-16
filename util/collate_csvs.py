@@ -29,47 +29,45 @@ def ProcessCommandLine():
     #lets parse the arguments
     parser = argparse.ArgumentParser(description='''Combine multiple csv files into one.
 
-Reads all csv files passed in cmdline and combines their data blocks. A wildcard (e.g. *.dat)
-can be passed, it will be substituted by shell and treated as a list.
+Reads all csv files passed in cmdline and combines their data blocks. A wildcard
+(e.g. *.dat) can be passed, it will be substituted by shell and treated as a list.
 There should be a single time column in each file, which (ideally) should match throughout.
 ''')
     parser.add_argument('fn', nargs="+", help="list of file names to collate or a wildcard")
-    #parser.add_argument('-g', default='grid_table.lst', help="name of the file with the grid of the aspect factors, defaults to 'grid_table.lst'")
-    #parser.add_argument('-p', action='store_true', help="print the table with weights as well")
-    parser.add_argument('-o', help="name of output file. If omitted, uses fn1[:-3].atf")
-    #parser.add_argument('-s', help="skip S header lines")
+    parser.add_argument('-o', help="name of output file. If omitted, output goes to stdout")
+    parser.add_argument('-p', default=',',  help="output separator, default is ',' (comma)")
+    parser.add_argument('-s', default='\t', help= "input separator, default is TAB")
     return parser.parse_args()
 
 
 
 # ------------------------------------------------
-#main block
+# main block
 args = ProcessCommandLine()
 
-print(args.fn)
-sys.exit()
+# print(args.s)
+# sys.exit()
 
 #get the 1st file in to serve as a base to collate upon
 with open(args.fn[0]) as F:
-    data = tabdata.TabData()
-    tabdata_io.read_xvg_byGmx(data, F)
+    data = tabdata.from_csv(F, Separator = args.s)
 
 # now process the rest
 for fn in args.fn[1:]:
     with open(fn) as F:
-        newdat = tabdata.TabData()
-        tabdata_io.read_xvg_byGmx(newdat, F)
+        newdat = tabdata.from_csv(F, Separator = args.s)
         if (newdat.Npts != data.Npts):
             print("lengths of supplied files do not match!")
             sys.exit()
         # now append column
-        data.append_columns(newdat, ncols=1)
+        data.append_columns(newdat)
 
 
 if args.o:
-	F = open(args.o, mode='w')
+	with open(args.o, mode='w') as F:
+            data.write_csv(F, Separator = args.p)
 else:
-	F = open(args.fn[0][:-4]+"_new.xvg", mode='w')
+	data.write_csv(sys.stdout, Separator = args.p)
 
-tabdata_io.write_xvg_byGmx(data, F)
-F.close()
+
+

@@ -201,7 +201,13 @@ class TabData:
             raise DimensionMismatch
         #
         # set the colID
-        self.colID.extend(passed.colID[nfirst:nlast])
+        if self.colID != []:
+            #print(passed.colID[nfirst+1:nlast+1])
+            # NOTE: slices end with index *after* last element
+            if self.has_time:
+                self.colID.extend(passed.colID[nfirst+1:nlast+1])
+            else:
+                self.colID.extend(passed.colID[nfirst:nlast+1])
         #
         if (not self.strict_rect) or ((pNptsMin == self.Npts) and (pNptsMax == self.Npts)):
             self.data.extend(passed.data[nfirst:nlast])
