@@ -14,3 +14,22 @@ The ada/ dir contains initial (very bare, far from complete) code to do a simila
 Ada (the lack of proper data organization and type checking in python makes for quite a
 ride when you come back to your code say 10 years later. But this is more of an excersize,
 so this part will likely see only sporadic development).
+
+## refactoring remarks
+A mini-plan for the refactoring branch
+
+### Rationale
+We need to add calc capabilities. At the very least fitting, normalization, baseline correction. 
+Potentially a full algebra. This is best done via numpy facilities. However numpy arrays are
+fixed size. Adding new rows/columns is possible via stacking, but this would recreate/copy arrays
+and seems rather wasteful. Plus the IO code is well tested by now. So, we need to support alternative
+data representations it seems.
+
+### Implementation
+Support alternative representations. Keep list-based class for the IO (primarily reading). 
+Add numpy.array-based class for computation. Go with class hierarchy. Use abstract class at the top, 
+or just raise exceptions on data access methods?
+
+<L> class TabDataBase  - abstract or with stub methods?
+<L> class TabDataFlex  - old, list-based data. Supports full IO, but no calc.
+<L> class TabDataNP    - new, numpy.array-based data. Supports cala, for IO supports writes, but not reads?
