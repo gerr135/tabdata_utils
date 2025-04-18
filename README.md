@@ -30,6 +30,6 @@ Support alternative representations. Keep list-based class for the IO (primarily
 Add numpy.array-based class for computation. Go with class hierarchy. Use abstract class at the top, 
 or just raise exceptions on data access methods?
 
-<L> class TabDataBase  - abstract or with stub methods?
-<L> class TabDataFlex  - old, list-based data. Supports full IO, but no calc.
-<L> class TabDataNP    - new, numpy.array-based data. Supports cala, for IO supports writes, but not reads?
+- class TabDataBase  - abstract or with stub methods?
+- class TabDataFlex  - old, list-based data. Supports full IO, but no calc.
+- class TabDataNP    - new, numpy.array-based data. Supports cala, for IO supports writes, but not reads?
