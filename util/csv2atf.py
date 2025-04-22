@@ -21,8 +21,6 @@ import sys, argparse
 #sys.path.append("..")
 from lib import tabdata
 
-test_file = "../dat/test.atf"
-
 def ProcessCommandLine():
     parser = argparse.ArgumentParser(description="convert cvs file to atf format")
     parser.add_argument('fn',   help="input file name")
