@@ -100,7 +100,7 @@ else:
     idxToTake = idxRatios
     newTitle = ["time"] + [line[i].split()[0][1:] for i in idxToTake]
 
-print(",".join(newTitle) + "\n")
+#print(",".join(newTitle) + "\n")
 Fout.write(",".join(newTitle) + "\n")
 
 # main block: data rows
