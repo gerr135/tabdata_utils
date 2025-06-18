@@ -46,7 +46,6 @@ Missing boundary index means beginning or end of data.
     parser.add_argument('-s', action='store_true', help="subtract baseline")
     parser.add_argument('-tl', type=float, help="timing of the basline region - low")
     parser.add_argument('-th', type=float, help="timing of the basline region - high")
-    parser.add_argument('-nh', action='store_true', help="do not print headers, only numbers (for scripted processing of outputs)")
     parser.add_argument('-v', action='store_true', help="be verbose")
     return parser.parse_args()
 
@@ -110,8 +109,8 @@ else:
 #
 # now the normalization
 
-##########################################
-## main ##
+################################
+### helpers ###
 def calcAvg(data, Il, Ih):
     "calc average per column in a given boundary"
     S=[]
@@ -122,58 +121,24 @@ def calcAvg(data, Il, Ih):
         S[i] /= (Ih-Il)
     return S
 
-def calcSD(data, Il, Ih, avg):
-    "standard deviation calc. Il,Ih - boundary indices. Avg - vector of averages (which is goonna be computed already)"
-    S=[]
-    for i in range(len(data.data)):
-        S.append(0)
-        for j in range(Il, Ih):
-            S[i] += (data.data[i][j] - avg[i])**2
-        S[i] = math.sqrt(S[i]/(Ih-Il-1))
-    return S
 
-def calcSEMfromSD(Il, Ih, SD):
-    "just does rescaling (div by sqrt(N))"
-    return [S/math.sqrt(Ih-Il) for S in SD]
-
-def calcSEM(data, Il, Ih, avg):
-    "a convenience wrapper calling calcSD and doing rescaling. avg is likely already calculated, so it is passed in"
-    return [S/math.sqrt(Ih-Il) for S in calcSD(data,Il,Ih,avg)]
-
-# stats on combined columns
-def combineAvg(avg):
-    "return mean of multi-mean. This is linear, so we can reuse multicolumn calc"
-    return sum(avg)/len(avg)
-
-def calcSDcombo(data, Il, Ih, avg):
-    """here we have to calculate separately, as our avg is different: a combo average, not per column.
-    Yes, we could do via moments (M1, M2, etc), but this is too basic to worry (and same amount of total computation)
-    """
-    S=0
-    for i in range(len(data.data)):
-        for j in range(Il, Ih):
-            S += (data.data[i][j] - avg)**2
-        S = math.sqrt(S/(len(data.data)*(Ih-Il-1)))
-    return S
-
-
-# main action
+##########################################
+## main ##
 
 # we need avg in any case
 avg = calcAvg(data,Il,Ih)
-avgC = combineAvg(avg)
 
-if 'd' in StatsStr:
-    if args.c: SDC  = calcSDcombo(data,Il,Ih,avgC)
-    else: SD  = calcSD(data,Il,Ih,avg)
-if 'e' in StatsStr:
-    # a small optimization, to avoid double SD calc
-    if 'd' in StatsStr:
-        if args.c: SEMC = SDC/math.sqrt(Ih-Il)
-        else: SEM = calcSEMfromSD(Il,Ih,SD)
-    else:
-        if args.c: SEMC = calcSDcombo(data,Il,Ih,avgC)/math.sqrt(Ih-Il)
-        else: SEM = calcSEM(data,Il,Ih,avg)
+# do an in-place normalization
+## NOTE: should be moved to tabdata.method, ideally in the subpackage
+for i in range(len(data.data)):
+    for j in range(len(data.data[0])):
+        data.data[i][j] = data.data[i][j] / avg[i]
+
+if args.s:
+    # also do the subtraction
+    for i in range(len(data.data)):
+        for j in range(len(data.data[0])):
+            data.data[i][j] -= 1
 
 # finally otput
 if args.o:
@@ -181,36 +146,7 @@ if args.o:
 else:
     Fout = sys.stdout
 
-
-# headers
-if not args.nh:
-    Fout.write("entry   ")
-    for l in StatsStr:
-        Fout.write(StatsMap[l] + "   ")
-    Fout.write("\n")
-
-# actual output
-if args.c:
-    # we output combined results, 1 line only
-    Fout.write((args.e + "   " if args.e else FName + "   "))
-    for l in StatsStr:
-        if   l == 'a': Fout.write(str(avgC))
-        elif l == 'd': Fout.write(str(SDC))
-        elif l == 'e': Fout.write(str(SEMC))
-        elif l == 'n': Fout.write(str(Ih-Il))
-        else: print("unexpected output code")
-        Fout.write("  ")
-    Fout.write("\n")
-else:
-    for i in range(len(data.data)):
-        Fout.write((args.e + "_" + str(i) + "   " if args.e else FName + "-" + str(i) + "   ") )
-        for l in StatsStr:
-            if   l == 'a': Fout.write(str(avg[i]))
-            elif l == 'd': Fout.write(str(SD[i]))
-            elif l == 'e': Fout.write(str(SEM[i]))
-            elif l == 'n': Fout.write(str(Ih-Il))
-            else: print("unexpected output code")
-            Fout.write("  ")
-        Fout.write("\n")
+# !!implement proper wrappers for below
+data.to_format(Fout,fFmt)
 
 if args.o:Fout.close()
