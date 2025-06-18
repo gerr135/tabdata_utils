@@ -1,7 +1,7 @@
 #! /usr/bin/python
 """Process the calcium imaging log file to create csv data easily understood by graph programs.
 
-Removes all the "extras" and outputsjust the titles and the data, in matching columns, csv format.
+Removes all the "extras" and outputs just the titles and the data, in matching columns, csv format.
 Also drops all the region averages and only outputs the ratios.
 """
 
@@ -16,9 +16,10 @@ def ProcessCommandLine():
 Removes all the "extras" and outputsjust the titles and the data, in matching columns, csv format.
 Also drops all the region averages and only outputs the ratios.''')
     parser.add_argument('fn', help="file name to process; use '-' for standard input")
-    parser.add_argument('-d', action='store_true', help="dat file, no extra headers, just column select")
-    #parser.add_argument('-g', default='grid_table.lst', help="name of the file with the grid of the aspect factors, defaults to 'grid_table.lst'")
+    parser.add_argument('-d', action='store_true', help="generic data file, no extra headers, just column select")
+    parser.add_argument('-k', action='store_true', help="keep all: keep all data columns, not just ratios")
     parser.add_argument('-o', help="name of output file. If omitted, creates a file with a csv extension")
+    #parser.add_argument('-g', default='grid_table.lst', help="name of the file with the grid of the aspect factors, defaults to 'grid_table.lst'")
     #parser.add_argument('-t', default=0.0, help="start at particular time, default = 0, if omitted keep reported wall time'")
     #parser.add_argument('-s', help="skip S header lines")
     return parser.parse_args()
@@ -45,6 +46,7 @@ Also drops all the region averages and only outputs the ratios.''')
 #main block
 args = ProcessCommandLine()
 #print("args.d =", args.d)
+#print("args.k =", args.k)
 
 if args.fn == '-':
     Fin = sys.stdin
@@ -88,18 +90,27 @@ if line[0][:4] != "Time":
     print("format mismatch detected (titles line expected), aborting!")
     sys.exit()
 #
-idxKeep = [i for i in range(len(line)) if line[i][-3:] == 'R1"']
-# list of indices containing ratios
-#print(idxKeep)
-newTitle = ["time"] + [line[i].split()[0][1:] for i in idxKeep]
-Fout.write(",".join(newTitle) + "\n")
+# if we got here, we are done with headers and this is a title line
+idxRatios = [i for i in range(len(line)) if line[i][-3:] == 'R1"'] # list of indices containing ratios
+#print(idxRatios)
+if args.k:
+    idxToTake = range(1,len(line)) # taking all (except 1st, which is time)
+    newTitle = ["time"] + [line[i].strip(' "') for i in idxToTake]
+else:
+    idxToTake = idxRatios
+    newTitle = ["time"] + [line[i].split()[0][1:] for i in idxToTake]
 
+print(",".join(newTitle) + "\n")
+Fout.write(",".join(newTitle) + "\n")
 
 # main block: data rows
 line = next(reader)
 timeStart = float(line[0])
 values = [] # list of individual rows of data (lists) - we need to collect all data until we determine timestep, before we can output
-values.append([str(float(line[i])) for i in idxKeep])  # str(float()) is to strip spaces and check validity
+if args.k:
+    values.append([str(float(line[i])) for i in idxToTake])  # str(float()) is to strip spaces and check validity
+else:
+    values.append([str(float(line[i])) for i in idxToTake])  # str(float()) is to strip spaces and check validity
 #print("t0 = ", timeStart, ";  vals = ", values)
 
 # below is handling for arbitrary time start, which is niche, just commenting out for now..
@@ -125,7 +136,7 @@ for line in reader:
         continue
     # if we are here, then supposedly we have a data row
     time = float(line[0])
-    values.append([str(float(line[i])) for i in idxKeep])
+    values.append([str(float(line[i])) for i in idxToTake])
     if timeReset:
         #yet another interrupted line, store data and keep going
         timeCur = time
@@ -150,7 +161,7 @@ for line in reader:
         continue
     # time = round(float(line[0]) - timeStart, 2) # stale, we regenerate time
     Nrow += 1
-    rowVals = [str(float(line[i])) for i in idxKeep]
+    rowVals = [str(float(line[i])) for i in idxToTake]
     Fout.write(",".join([str(Nrow*timeStep)] + rowVals) + "\n")
 
 Fout.close()
