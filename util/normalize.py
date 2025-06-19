@@ -20,18 +20,15 @@ This basically calculates mean in the baseline region, divides all data and (opt
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import sys, argparse, math
-from lib import tabdata, tabdata_io
+import sys, argparse
+from lib/tabdata_common import *
+from lib import tabdata
 
-File_Formats = ['csv', 'atf', 'xvg']
-Stats_list   = ['avg', 'sd',  'sem']
-SlistStr = "aden"
-StatsMap = {'a':"avg",  'd':"stddev", 'e':"s.e.m.", 'n':"N-entries"}
 
 def ProcessCommandLine():
     parser = argparse.ArgumentParser(description='''Perform basic normalization on a data file.
 
-This basically calculates mean in the baseline region, divides all data by it and (optionally) subtracts 1 (to bring bl to 0).
+This calculates mean in the baseline region, divides all data by it and (optionally) subtracts 1 (to bring bl to 0).
 All calculations are done for each column individually. The baseline region is shared.
 Definition of baseline region can be done by either index or time boundaries. These can be combined.
 Both can be passed, index (-il or ih) takes precedence over times (-tl, -th), so -tX is ignored in -iX is passed.
@@ -66,7 +63,7 @@ if args.v:print("file name = ", FName, " + ", FExt, ";  subtract baseline=",args
 if args.f:
     fFmt = args.f
 else:
-    if FExt not in File_Formats:
+    if FExt not in TabData_Formats:
         print("cannot process input file of type ", FExt)
         sys.exit()
     fFmt = FExt

@@ -331,7 +331,7 @@ def from_HEKA_csv(F, strict_rect = True):
 
 def from_xvg(F, strict_rect = True):
     data = TabData(strict_rect = strict_rect)
-    data.read_xvg(F)
+    data.read_xvg_gmx(F)
     return data
 
 
@@ -340,6 +340,18 @@ TabData.constructors = {
     "xvg":from_xvg,"heka_csv":from_HEKA_csv
     }
 
+TabData.writers = {
+    "csv":TabData.write_csv,
+    "atf":TabData.write_atf,
+    "xvg":TabData.write_xvg
+    }
+
 def from_format(F, fmt, strict_rect = True):
+    "constructs the base structure and read selected format"
     return TabData.constructors[fmt](F,strict_rect = strict_rect)
+
+def to_format(F, fmt):
+    "unified write in a format passed by fmt"
+    TabData.writers[fmt](F)
+    return
 
