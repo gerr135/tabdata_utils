@@ -21,7 +21,7 @@ This basically calculates mean in the baseline region, divides all data and (opt
 #
 
 import sys, argparse
-from lib/tabdata_common import *
+from lib.tabdata_common import *
 from lib import tabdata
 
 
@@ -36,7 +36,7 @@ Missing boundary index means beginning or end of data.
 '''
 )
     parser.add_argument('fn',  help="file names to process. Type is determined form the extension or given by an option")
-    parser.add_argument('-f', choices=File_Formats, help="specify the input data format")
+    parser.add_argument('-f', choices=TabData_Formats, help="specify the input data format")
     parser.add_argument('-o', help="Output to this file. If omitted, stdout")
     parser.add_argument('-il', type=float, help="index of the basline region - low")
     parser.add_argument('-ih', type=float, help="index of the basline region - high")
@@ -92,7 +92,7 @@ else:
     Il = 0
 
 # now the high boundary
-of args.ih:
+if args.ih:
     Ih = args.ih
 elif args.bh:
     for i in range(Il,len(data.time)):
@@ -120,9 +120,8 @@ def calcAvg(data, Il, Ih):
 
 
 ##########################################
-## main ##
+### main ###
 
-# we need avg in any case
 avg = calcAvg(data,Il,Ih)
 
 # do an in-place normalization
