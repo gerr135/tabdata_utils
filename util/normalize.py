@@ -79,7 +79,7 @@ if (args.tl or args.th) and not hasattr(data,"time"):
     print("timings are passed, but data has no time column!\nAborting..")
     sys.exit()
 
-# now check the low boundary
+# check the low boundary
 if args.il:
     Il = i
 elif args.tl:
@@ -91,12 +91,12 @@ elif args.tl:
 else:
     Il = 0
 
-# now the high boundary
+# check the high boundary
 if args.ih:
     Ih = args.ih
-elif args.bh:
+elif args.th:
     for i in range(Il,len(data.time)):
-        if data.time[i] >= args.bh:
+        if data.time[i] >= args.th:
             Ih = i
             break
 else:
