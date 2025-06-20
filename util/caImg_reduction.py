@@ -19,6 +19,7 @@ Also drops all the region averages and only outputs the ratios.''')
     parser.add_argument('-d', action='store_true', help="generic data file, no extra headers, just column select")
     parser.add_argument('-k', action='store_true', help="keep all: keep all data columns, not just ratios")
     parser.add_argument('-o', help="name of output file. If omitted, creates a file with a csv extension")
+    parser.add_argument('-z', action='store_true', help="keep zero: do not discard the baseline region, the 0.0 column")
     #parser.add_argument('-g', default='grid_table.lst', help="name of the file with the grid of the aspect factors, defaults to 'grid_table.lst'")
     #parser.add_argument('-t', default=0.0, help="start at particular time, default = 0, if omitted keep reported wall time'")
     #parser.add_argument('-s', help="skip S header lines")
@@ -43,7 +44,10 @@ Also drops all the region averages and only outputs the ratios.''')
 # -------------------------------------------------
 
 
-#main block
+##########################
+### main block ###
+
+# arguments and prepping
 args = ProcessCommandLine()
 #print("args.d =", args.d)
 #print("args.k =", args.k)
@@ -59,8 +63,13 @@ if args.o:
 else:
 	Fout = open(args.fn[:-3]+"csv", mode='w')
 
+
+### start the reading ###
 reader = csv.reader(Fin)
 line = next(reader)
+
+# proc the headers
+# first stripping the region definitions and other cruft
 header = line[0][:4]
 #print(line, "\n'", header, "'", sep='')
 
@@ -84,34 +93,30 @@ if not args.d and (header == "File"):
         line = next(reader)
 
 
-# titles row
+### titles row ###
 #print(line)
 if line[0][:4] != "Time":
     print("format mismatch detected (titles line expected), aborting!")
     sys.exit()
-#
+
 # if we got here, we are done with headers and this is a title line
 idxRatios = [i for i in range(len(line)) if line[i][-3:] == 'R1"'] # list of indices containing ratios
 #print(idxRatios)
 if args.k:
     idxToTake = range(1,len(line)) # taking all (except 1st, which is time)
-    newTitle = ["time"] + [line[i].strip(' "') for i in idxToTake]
 else:
     idxToTake = idxRatios
-    newTitle = ["time"] + [line[i].split()[0][1:] for i in idxToTake]
 
-#print(",".join(newTitle) + "\n")
-Fout.write(",".join(newTitle) + "\n")
 
-# main block: data rows
+###########################
+### data block analysis ###
 line = next(reader)
 timeStart = float(line[0])
-values = [] # list of individual rows of data (lists) - we need to collect all data until we determine timestep, before we can output
-if args.k:
-    values.append([str(float(line[i])) for i in idxToTake])  # str(float()) is to strip spaces and check validity
-else:
-    values.append([str(float(line[i])) for i in idxToTake])  # str(float()) is to strip spaces and check validity
-#print("t0 = ", timeStart, ";  vals = ", values)
+values = [] # list of individual rows of data (lists)
+values.append([str(float(line[i])) for i in idxToTake]) # split off for readability (instead of [ [] ])
+# NOTE: ATTN!! values is a list of row, not columns, like in TabData !!! ###
+print("t0 = ", timeStart, ";  vals = ", values)
+# we need to collect all data until we determine timestep, before we can output
 
 # below is handling for arbitrary time start, which is niche, just commenting out for now..
 # need to get initial time, so special proc for 1st data line
@@ -146,9 +151,60 @@ for line in reader:
         # finally two consequtive data rows, can end this loop
         timeStep = round(time - timeCur, 2)
         break
-# we got our timestep, now output the collected data rows
+print("values after step detection: ", values)
+
+# before starting output, we need to check and process the 0.0 - baseline region
+# normally this is the 1st data (not time) column, but program allows arbitrary entry
+# so we have to scan and mark accordingly
+# On the other hand, there supposed to be only 1 such zone, which implies
+# either a single or up to 3 *consequtive* columns with 0s
+idxZero = []
 for i in range(len(values)):
-    Fout.write(",".join([str(i*timeStep)] + values[i]) + "\n")
+    if values[i][0] == 0.0: # use precise ==, to only match explicit 0.0 in background columns
+        idxZero.append(i)
+#
+if len(idxZero) > 0:
+    idxZeroRemove = [] #should not remove entries of a list inside a cycle over it
+    for i in range(len(idxZero)):
+        for j in range(1,len(values[0])):
+            if values[idxZero[i]][j] != 0.0:
+                idxZeroRemove.append(i)
+    if len(idxZeroRemove) > 0:
+        # should pretty much never get here
+        idxZero = [x for x in idxZero if x not in idxZeroRemove]
+#
+if len(idxZero) > 3:
+    # may want to expand tests, e.g. for sequential indices
+    print("Data consistency check: more than 3 columns for background!!\nAborting..")
+    sys.exit()
+#
+# 0s are detected and validated (very basic check atm),
+# remove 0 columns from idxToTake and values
+idxToTake = [x for x in idxToTake if x not in idxZero]
+values    = [[y for y in x if y not in idxZero] for x in values]
+print("values with 0s eliminated", values)
+sys.exit()
+
+
+
+#########################################
+### Output start ###
+#
+# First the title row
+# create it here, as idxToTake has only been stabilized above
+if args.k:
+    newTitle = ["time"] + [line[i].strip(' "') for i in idxToTake]
+else:
+    newTitle = ["time"] + [line[i].split()[0][1:] for i in idxToTake]
+#print(",".join(newTitle) + "\n")
+Fout.write(",".join(newTitle) + "\n")
+
+# we got our timestep and zero columns, now prep and output the collected data rows
+#
+for i in range(len(values)):
+    # values copntains list of columns, need to iterate over rows
+    for j in range(len(values[0])):
+        Fout.write(",".join([str(i*timeStep)] + values[i]) + "\n")
 
 # the rest of file contains just the data rows, so use for iterator until EOF
 Nrow = len(values) - 1 # 0-base indexing
