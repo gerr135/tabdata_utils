@@ -350,8 +350,9 @@ def from_format(F, fmt, strict_rect = True):
     "constructs the base structure and read selected format"
     return TabData.constructors[fmt](F,strict_rect = strict_rect)
 
-def to_format(F, fmt):
+def to_format(self, F, fmt):
     "unified write in a format passed by fmt"
-    TabData.writers[fmt](F)
+    self.writers[fmt](self, F) # as this is not a method, need explicit self routing
     return
 
+TabData.to_format = to_format

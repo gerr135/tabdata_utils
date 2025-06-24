@@ -48,8 +48,21 @@ Missing boundary index means beginning or end of data.
 
 
 
-# ------------------------------------------------
-#main block
+################################
+### helpers ###
+def calcAvg(data, Il, Ih):
+    "calc average per column in a given boundary"
+    S=[]
+    for i in range(len(data.data)):
+        S.append(0)
+        for j in range(Il, Ih):
+            S[i] += data.data[i][j]
+        S[i] /= (Ih-Il)
+    return S
+
+
+##########################################
+### main ###
 args = ProcessCommandLine()
 
 # split off extension from fname
@@ -81,7 +94,7 @@ if (args.tl or args.th) and not hasattr(data,"time"):
 
 # check the low boundary
 if args.il:
-    Il = i
+    Il = int(args.il)
 elif args.tl:
     # iterate over time - less efficient, but we have no to,dt setup and this handles nonuniform time too..
     for i in range(len(data.time)):
@@ -93,7 +106,7 @@ else:
 
 # check the high boundary
 if args.ih:
-    Ih = args.ih
+    Ih = int(args.ih)
 elif args.th:
     for i in range(Il,len(data.time)):
         if data.time[i] >= args.th:
@@ -102,25 +115,10 @@ elif args.th:
 else:
     Ih = len(data.time)
 # done with baseline indices
+print("indices: (Il, Ih),  val(Il, Ih):  (", Il, ", ", Ih, ");    (", data.time[Il], ", ", data.time[Ih], ")" )
 
 #
 # now the normalization
-
-################################
-### helpers ###
-def calcAvg(data, Il, Ih):
-    "calc average per column in a given boundary"
-    S=[]
-    for i in range(len(data.data)):
-        S.append(0)
-        for j in range(Il, Ih):
-            S[i] += data.data[i][j]
-        S[i] /= (Ih-Il)
-    return S
-
-
-##########################################
-### main ###
 
 avg = calcAvg(data,Il,Ih)
 
@@ -138,7 +136,7 @@ if args.s:
 
 # finally otput
 if args.o:
-    Fout = open(args.f,'w')
+    Fout = open(args.o,'w')
 else:
     Fout = sys.stdout
 
