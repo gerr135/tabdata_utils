@@ -52,7 +52,7 @@ class TabData:
     Core funtionality focuses on IO only anyway and does not hide data.
     So all the implementation details of data mangling is up to the final scripts..
     """
-    def __init__(self, no_time=False, strict_rect = True):
+    def __init__(self, no_time=False, strict_rect=True):
         """Empty field constructor based on generic data model.
         Parameters:
             no_time     - controls creation of a time column. Default yes.
@@ -61,10 +61,10 @@ class TabData:
         """
         # these (empty) assignments lay out general data representation
         self.strict_rect = strict_rect
-        self.comments = [] # some formats may allow a few lines of comments at the top
-        self.headers  = [] # some descriptive info of consequence
-        self.colID = [] # list of strings representing column names, should match data[+time] in size :- colID[0] == time header, if time is present
-        self.data  = [] # list of columns, each holding a single "vector" - list of values
+        self.comments = []  # some formats may allow a few lines of comments at the top
+        self.headers  = []  # some descriptive info of consequence
+        self.colID = []  # list of strings representing column names, should match data[+time] in size :- colID[0] == time header, if time is present
+        self.data  = []  # list of columns, each holding a single "vector" - list of values
         if not no_time:
             self.time = [] # most files are gonna have special 1st column;
 
@@ -141,7 +141,7 @@ class TabData:
         for i in range(N):
             self.time.append(t0 + i*dt)
 
-    def append_column(self, column, colStr = "", shorten = False):
+    def append_column(self, column, colStr="", shorten=False):
         """append a passed column = list of numbers to the data.
             If need to append a single column of another tabdata, pass item.data[X]
             or (better) use append_columns..
