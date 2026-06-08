@@ -154,27 +154,42 @@ class TabData:
         # so that either all modifications succeed, or we leave our object untouched.
         if (self.colID != []) and (colStr == ""):
             raise TabData_Error
-        if self.strict_rect and not shorten and (len(column) != self.Npts):
-            raise DimensionMismatch
-        # done with checks, do the colIDs
-        if self.colID != []:
-            self.colID.append(colStr)
+        if self.data != []:
+            # explicitly guard empty/new object
+            if self.strict_rect and not shorten and (len(column) != self.Npts):
+                raise DimensionMismatch
         #
-        Npts = min(self.Npts, len(column))
-        if (not self.strict_rect) or (len(column) == self.Npts):
+        # done with checks, start the copy
+        if self.data == []:
+            # new/empty data, special case
+            if colStr != "":
+                # we do have labels/channel names etc.
+                if self.has_time():
+                    # we need to seed the time column label as well, assume just "time"
+                    # NOTE: !!! address in refactoring!!!
+                    # pass specific label at creation or something
+                    self.colID.append("time (ms)")  # standard for ATF, our most common.
+                self.colID.append(colStr)
             self.data.append(column)
         else:
-            # data differ in length and we shorten
-            if len(column) > self.Npts:
-                # either we shorten a single new column
-                self.data.append(column[:self.Npts])
+            if self.colID != []:
+                self.colID.append(colStr)
+            #
+            Npts = min(self.Npts, len(column))
+            if (not self.strict_rect) or (len(column) == self.Npts):
+                self.data.append(column)
             else:
-                # or or data is too long, so we reconstruct all data
-                newdata = []
-                for old in self.data:
-                    newdata.append(old[:Npts])
-                newdata.append(column)
-                self.data = newdata
+                # data differ in length and we shorten
+                if len(column) > self.Npts:
+                    # either we shorten a single new column
+                    self.data.append(column[:self.Npts])
+                else:
+                    # or or data is too long, so we reconstruct all data
+                    newdata = []
+                    for old in self.data:
+                        newdata.append(old[:Npts])
+                    newdata.append(column)
+                    self.data = newdata
 
 
     def append_columns(self, passed, nfirst = 0, ncols = 0, shorten = False):
